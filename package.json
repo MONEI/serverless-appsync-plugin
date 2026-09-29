@@ -1,10 +1,10 @@
 {
-  "name": "serverless-appsync-plugin",
-  "version": "0.0.0-development",
+  "name": "@monei-js/serverless-appsync-plugin",
+  "version": "2.14.0",
   "description": "AWS AppSync support for the Serverless Framework",
   "main": "lib/index.js",
   "types": "lib/types/index.d.ts",
-  "repository": "https://github.com/sid88in/serverless-appsync-plugin",
+  "repository": "https://github.com/MONEI/serverless-appsync-plugin",
   "license": "MIT",
   "files": [
     "/lib"
@@ -95,5 +95,8 @@
     "*.{json,md,yml,yaml}": [
       "prettier --write"
     ]
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }
