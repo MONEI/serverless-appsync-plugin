@@ -45,7 +45,8 @@ appSync:
 - `resolvers`: See [Resolvers](resolvers.md)
 - `pipelineFunctions`: See [Pipeline functions](pipeline-functions.md)
 - `substitutions`: See [Substitutions](substitutions.md). Deprecated: Use environment variables.
-- `environment`: A list of environment variables for the API. See [Official Documentation](https://docs.aws.amazon.com/appsync/latest/devguide/environmental-variables.html)
+- `environment`: A list of environment variables for the API. See [Official Documentation](https://docs.aws.amazon.com/appsync/latest/devguide/environment-variables.html)
+- `enhancedMetrics`: See [enhanced metrics](enhancedMetrics.md)
 - `caching`: See [Cacing](caching.md)
 - `waf`: See [Web Application Firefall](WAF.md)
 - `logging`: See [Logging](#Logging)
@@ -186,7 +187,7 @@ appSync:
     retentionInDays: 14
 ```
 
-- `level`: `ERROR`, `NONE`, or `ALL`
+- `level`: `ERROR`, `NONE`, `INFO`, `DEBUG` or `ALL`
 - `enabled`: Boolean, Optional. Defaults to `true` when `logging` is present.
 - `excludeVerboseContent`: Boolean, Optional. Exclude or not verbose content (headers, response headers, context, and evaluated mapping templates), regardless of field logging level. Defaults to `false`.
 - `retentionInDays`: Optional. Number of days to retain the logs. Defaults to [`provider.logRetentionInDays`](https://www.serverless.com/framework/docs/providers/aws/guide/serverless.yml#general-function-settings).

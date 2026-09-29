@@ -252,7 +252,13 @@ export class Waf {
               SizeConstraintStatement: {
                 ComparisonOperator: 'GT',
                 FieldToMatch: {
-                  Body: {},
+                  // AppSync only forwards the first 8kb of the body to WAF,
+                  // so an oversized body must be treated as a match in order
+                  // to actually block it (CONTINUE would cap the measured
+                  // size at the inspection limit and never exceed it).
+                  Body: {
+                    OversizeHandling: 'MATCH',
+                  },
                 },
                 Size: 8 * 1024,
                 TextTransformations: [
@@ -266,7 +272,12 @@ export class Waf {
             {
               ByteMatchStatement: {
                 FieldToMatch: {
-                  Body: {},
+                  // Inspect the available (first 8kb) body for the
+                  // introspection query. Larger bodies are caught by the
+                  // SizeConstraintStatement above.
+                  Body: {
+                    OversizeHandling: 'CONTINUE',
+                  },
                 },
                 PositionalConstraint: 'CONTAINS',
                 SearchString: '__schema',
@@ -294,6 +305,10 @@ export class Waf {
   ): CfnWafRule {
     let Name = `${defaultNamePrefix || ''}Throttle`;
     let Limit = 100;
+    // Only emit EvaluationWindowSec when the user explicitly sets it.
+    // AWS WAF defaults this to 300 (5 minutes); leaving it undefined keeps the
+    // generated CloudFormation byte-identical for existing throttle rules.
+    let EvaluationWindowSec: number | undefined;
     let AggregateKeyType = 'IP';
     let ForwardedIPConfig;
     let Priority;
@@ -305,6 +320,7 @@ export class Waf {
       Name = config.name || Name;
       AggregateKeyType = config.aggregateKeyType || AggregateKeyType;
       Limit = config.limit || Limit;
+      EvaluationWindowSec = config.evaluationWindowSec;
       Priority = config.priority;
       ScopeDownStatement = config.scopeDownStatement;
       if (AggregateKeyType === 'FORWARDED_IP') {
@@ -326,6 +342,7 @@ export class Waf {
         RateBasedStatement: {
           AggregateKeyType,
           Limit,
+          EvaluationWindowSec,
           ForwardedIPConfig,
           ScopeDownStatement,
         },

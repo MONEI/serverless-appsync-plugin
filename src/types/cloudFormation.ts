@@ -16,7 +16,16 @@ export type FnSub = {
   'Fn::Sub': [string, Record<string, string | IntrinsicFunction>];
 };
 
-export type IntrinsicFunction = FnGetAtt | FnJoin | FnRef | FnSub;
+export type FnImportValue = {
+  'Fn::ImportValue': string | IntrinsicFunction;
+};
+
+export type IntrinsicFunction =
+  | FnGetAtt
+  | FnJoin
+  | FnRef
+  | FnSub
+  | FnImportValue;
 
 export type CfnDeltaSyncConfig = {
   BaseTableTTL: number;
@@ -40,7 +49,8 @@ export type CfnDataSource = {
       | 'NONE'
       | 'HTTP'
       | 'RELATIONAL_DATABASE'
-      | 'AMAZON_EVENTBRIDGE';
+      | 'AMAZON_EVENTBRIDGE'
+      | 'AMAZON_BEDROCK_RUNTIME';
     ServiceRoleArn?: string | IntrinsicFunction;
     LambdaConfig?: {
       LambdaFunctionArn: string | IntrinsicFunction;
@@ -117,6 +127,7 @@ export type CfnResolver = {
       };
     };
     MaxBatchSize?: number;
+    MetricsConfig?: 'ENABLED' | 'DISABLED';
   };
 };
 
@@ -180,6 +191,7 @@ type CfnWafRuleRateBasedStatement = {
     HeaderName: string;
   };
   Limit: number;
+  EvaluationWindowSec?: number;
   ScopeDownStatement?: CfnWafRuleStatement;
 };
 

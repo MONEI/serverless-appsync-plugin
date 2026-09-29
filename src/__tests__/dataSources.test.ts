@@ -6,6 +6,24 @@ const plugin = given.plugin();
 
 describe('DataSource', () => {
   describe('DynamoDB', () => {
+    // Regression guard for #352: generated resource ARNs must derive the
+    // partition from CloudFormation (`AWS::Partition`) so they are valid in
+    // the aws-cn (China) and aws-us-gov (GovCloud) partitions, not hardcoded
+    // to "aws".
+    it('should derive the resource ARN partition from AWS::Partition', () => {
+      const api = new Api(given.appSyncConfig(), plugin);
+      const dataSource = new DataSource(api, {
+        type: 'AMAZON_DYNAMODB',
+        name: 'dynamo',
+        config: {
+          tableName: 'data',
+        },
+      });
+      const role = JSON.stringify(dataSource.compileDataSourceIamRole());
+      expect(role).toContain('"Ref":"AWS::Partition"');
+      expect(role).not.toContain('"arn","aws"');
+    });
+
     it('should generate Resource with default role', () => {
       const api = new Api(given.appSyncConfig(), plugin);
       const dataSource = new DataSource(api, {
@@ -178,6 +196,84 @@ describe('DataSource', () => {
     });
   });
 
+  describe('Bedrock', () => {
+    it('should generate Resource with default role', () => {
+      const api = new Api(given.appSyncConfig(), plugin);
+      const dataSource = new DataSource(api, {
+        type: 'AMAZON_BEDROCK_RUNTIME',
+        name: 'bedrock',
+        description: 'My Bedrock data source',
+      });
+
+      expect(dataSource.compile()).toMatchSnapshot();
+    });
+
+    it('should generate default role with scoped models', () => {
+      const api = new Api(given.appSyncConfig(), plugin);
+      const dataSource = new DataSource(api, {
+        type: 'AMAZON_BEDROCK_RUNTIME',
+        name: 'bedrock',
+        description: 'My Bedrock data source',
+        config: {
+          models: [
+            'amazon.titan-text-lite-v1',
+            'arn:aws:bedrock:us-east-1:123456789012:inference-profile/us.anthropic.claude-3-5-haiku-20241022-v1:0',
+          ],
+        },
+      });
+
+      expect(dataSource.compile()).toMatchSnapshot();
+    });
+
+    it('should expand a cross-region inference profile id into the profile and foundation-model ARNs', () => {
+      const api = new Api(given.appSyncConfig(), plugin);
+      const dataSource = new DataSource(api, {
+        type: 'AMAZON_BEDROCK_RUNTIME',
+        name: 'bedrock',
+        description: 'My Bedrock data source',
+        config: {
+          models: ['eu.amazon.nova-2-lite-v1:0'],
+        },
+      });
+
+      expect(dataSource.compileDataSourceIamRole()).toMatchSnapshot();
+    });
+
+    it('should generate default role with custom statement', () => {
+      const api = new Api(given.appSyncConfig(), plugin);
+      const dataSource = new DataSource(api, {
+        type: 'AMAZON_BEDROCK_RUNTIME',
+        name: 'bedrock',
+        description: 'My Bedrock data source',
+        config: {
+          iamRoleStatements: [
+            {
+              Effect: 'Allow',
+              Action: ['bedrock:InvokeModel'],
+              Resource: ['*'],
+            },
+          ],
+        },
+      });
+
+      expect(dataSource.compileDataSourceIamRole()).toMatchSnapshot();
+    });
+
+    it('should not generate default role when a service role arn is passed', () => {
+      const api = new Api(given.appSyncConfig(), plugin);
+      const dataSource = new DataSource(api, {
+        type: 'AMAZON_BEDROCK_RUNTIME',
+        name: 'bedrock',
+        description: 'My Bedrock data source',
+        config: {
+          serviceRoleArn: 'arn:aws:iam:',
+        },
+      });
+
+      expect(dataSource.compileDataSourceIamRole()).toBeUndefined();
+    });
+  });
+
   describe('AWS Lambda', () => {
     it('should generate Resource with default role', () => {
       const api = new Api(given.appSyncConfig(), plugin);
@@ -260,17 +356,17 @@ describe('DataSource', () => {
       });
 
       expect(dataSource.compile()).toMatchInlineSnapshot(`
-        Object {
-          "GraphQlDsmyEndpoint": Object {
-            "Properties": Object {
-              "ApiId": Object {
-                "Fn::GetAtt": Array [
+        {
+          "GraphQlDsmyEndpoint": {
+            "Properties": {
+              "ApiId": {
+                "Fn::GetAtt": [
                   "GraphQlApi",
                   "ApiId",
                 ],
               },
               "Description": "My HTTP resolver",
-              "HttpConfig": Object {
+              "HttpConfig": {
                 "Endpoint": "https://api.example.com",
               },
               "Name": "myEndpoint",

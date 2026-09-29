@@ -1,4 +1,5 @@
 import { BuildOptions } from 'esbuild';
+import { IntrinsicFunction } from './cloudFormation';
 import {
   Auth,
   DomainConfig,
@@ -13,9 +14,11 @@ import {
   DsOpenSearchConfig,
   DsLambdaConfig,
   DsEventBridgeConfig,
+  DsBedrockConfig,
   DsNone,
   Substitutions,
   EnvironmentVariables,
+  EnhancedMetricsConfig,
 } from './common';
 export * from './common';
 
@@ -31,7 +34,8 @@ export type AppSyncConfig = {
   pipelineFunctions: Record<string, PipelineFunctionConfig>;
   substitutions?: Substitutions;
   environment?: EnvironmentVariables;
-  xrayEnabled?: boolean;
+  enhancedMetrics?: EnhancedMetricsConfig;
+  xrayEnabled?: boolean | IntrinsicFunction;
   logging?: LoggingConfig;
   caching?: CachingConfig;
   waf?: WafConfig;
@@ -57,6 +61,7 @@ export type BaseResolverConfig = {
     | boolean;
   sync?: SyncConfig;
   substitutions?: Substitutions;
+  metricsConfig?: 'ENABLED' | 'DISABLED';
 };
 
 export type ResolverConfig = UnitResolverConfig | PipelineResolverConfig;
@@ -82,6 +87,7 @@ export type DataSourceConfig = {
   | DsOpenSearchConfig
   | DsLambdaConfig
   | DsEventBridgeConfig
+  | DsBedrockConfig
   | DsNone
 );
 

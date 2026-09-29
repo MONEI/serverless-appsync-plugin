@@ -23,6 +23,7 @@ export type WafThrottleConfig =
       action?: WafAction;
       aggregateKeyType?: 'IP' | 'FORWARDED_IP';
       limit?: number;
+      evaluationWindowSec?: number;
       priority?: number;
       forwardedIPConfig?: {
         headerName: string;
@@ -99,7 +100,7 @@ export type LambdaAuth = {
 export type OidcAuth = {
   type: 'OPENID_CONNECT';
   config: {
-    issuer: string;
+    issuer: string | IntrinsicFunction;
     clientId: string;
     iatTTL?: number;
     authTTL?: number;
@@ -112,12 +113,14 @@ export type ApiKeyAuth = {
 
 export type Auth = CognitoAuth | LambdaAuth | OidcAuth | ApiKeyAuth | IamAuth;
 
+export type AuthenticationType = Auth['type'];
+
 export type DomainConfig = {
   enabled?: boolean;
   useCloudFormation?: boolean;
   retain?: boolean;
   name: string;
-  certificateArn?: string;
+  certificateArn?: string | IntrinsicFunction;
   hostedZoneId?: string;
   hostedZoneName?: string;
   route53?: boolean;
@@ -130,6 +133,15 @@ export type SyncConfig = {
 
 export type Substitutions = Record<string, string | IntrinsicFunction>;
 export type EnvironmentVariables = Record<string, string | IntrinsicFunction>;
+export type EnhancedMetricsConfig = {
+  DataSourceLevelMetricsBehavior:
+    | 'FULL_REQUEST_DATA_SOURCE_METRICS'
+    | 'PER_DATA_SOURCE_METRICS';
+  OperationLevelMetricsConfig: 'ENABLED' | 'DISABLED';
+  ResolverLevelMetricsBehavior:
+    | 'FULL_REQUEST_RESOLVER_METRICS'
+    | 'PER_RESOLVER_METRICS';
+};
 
 export type DsDynamoDBConfig = {
   type: 'AMAZON_DYNAMODB';
@@ -154,6 +166,16 @@ export type DsEventBridgeConfig = {
     serviceRoleArn?: string | IntrinsicFunction;
     iamRoleStatements?: IamStatement[];
     eventBusArn: string | IntrinsicFunction;
+  };
+};
+
+export type DsBedrockConfig = {
+  type: 'AMAZON_BEDROCK_RUNTIME';
+  config?: {
+    serviceRoleArn?: string | IntrinsicFunction;
+    iamRoleStatements?: IamStatement[];
+    models?: (string | IntrinsicFunction)[];
+    region?: string | IntrinsicFunction;
   };
 };
 
@@ -229,9 +251,9 @@ export type VisibilityConfig = {
 };
 
 export type LoggingConfig = {
-  level: 'ERROR' | 'NONE' | 'ALL';
+  level: 'ERROR' | 'NONE' | 'ALL' | 'DEBUG' | 'INFO';
   enabled?: boolean;
-  excludeVerboseContent?: boolean;
+  excludeVerboseContent?: boolean | IntrinsicFunction;
   retentionInDays?: number;
   roleArn?: string | IntrinsicFunction;
 };

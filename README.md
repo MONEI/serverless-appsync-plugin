@@ -1,13 +1,50 @@
-[![Tests](https://github.com/sid88in/serverless-appsync-plugin/workflows/Tests/badge.svg)](https://github.com/sid88in/serverless-appsync-plugin/actions?query=workflow%3ATests) <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
-[![All Contributors](https://img.shields.io/badge/all_contributors-69-orange.svg?style=flat-square)](#contributors-)
+<p>
+  <a href="https://www.npmjs.com/package/serverless-appsync-plugin"><img alt="npm downloads (weekly)" src="https://img.shields.io/npm/dw/serverless-appsync-plugin?label=downloads%2Fweek&color=blue"></a>
+  <a href="https://www.npmjs.com/package/serverless-appsync-plugin"><img alt="npm downloads (year)" src="https://img.shields.io/npm/dy/serverless-appsync-plugin?label=downloads%2Fyear&color=blue"></a>
+</p>
 
-<!-- ALL-CONTRIBUTORS-BADGE:END -->
+<p>
+  <a href="https://github.com/sid88in/serverless-appsync-plugin/stargazers"><img alt="GitHub stars" src="https://img.shields.io/github/stars/sid88in/serverless-appsync-plugin?style=social"></a>
+  <a href="https://www.npmjs.com/package/serverless-appsync-plugin"><img alt="npm version" src="https://img.shields.io/npm/v/serverless-appsync-plugin?color=cb3837&label=npm&logo=npm"></a>
+  <a href="https://github.com/sid88in/serverless-appsync-plugin/blob/master/LICENSE"><img alt="license" src="https://img.shields.io/npm/l/serverless-appsync-plugin?color=green"></a>
+</p>
+
+<p>
+  <a href="https://github.com/sid88in/serverless-appsync-plugin/actions?query=workflow%3ATests"><img alt="Tests" src="https://github.com/sid88in/serverless-appsync-plugin/workflows/Tests/badge.svg"></a>
+  <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
+  <a href="#contributors-"><img alt="All Contributors" src="https://img.shields.io/badge/all_contributors-93-orange.svg?style=flat-square"></a>
+  <!-- ALL-CONTRIBUTORS-BADGE:END -->
+</p>
 
 Deploy [AppSync](https://aws.amazon.com/appsync) API's in minutes using this [Serverless](https://www.serverless.com/) plugin.
 
+Contact me @[linkedin](https://www.linkedin.com/in/sid88in/)
+
+## 📈 Adoption
+
+**9.2M+ total downloads since Jan 2018**
+
+<p align="center">
+  <a href="https://npm.chart.dev/serverless-appsync-plugin">
+    <img
+      src="https://nodei.co/npm/serverless-appsync-plugin.svg?downloads=true&downloadRank=true&stars=true"
+      alt="serverless-appsync-plugin — npm download stats"
+    />
+  </a>
+</p>
+
+<p align="center">
+  <strong>Interactive charts</strong> (weekly trends, year-by-year since 2018):
+  <a href="https://npm.chart.dev/serverless-appsync-plugin">npm.chart.dev ↗</a>
+  ·
+  <a href="https://npm-stat.com/charts.html?package=serverless-appsync-plugin&from=2018-01-27">npm-stat (from Jan 2018) ↗</a>
+  ·
+  <a href="https://www.npmjs.com/package/serverless-appsync-plugin">npmjs.com ↗</a>
+</p>
+
 # Minimum requirements
 
-- [Node.js v16 or higher](https://nodejs.org)
+- [Node.js v20 or higher](https://nodejs.org)
 - [Serverless v3.0.0 or higher](https://github.com/serverless/serverless)
 
 # Installation
@@ -43,6 +80,67 @@ appSync:
         tableName: ${sls:stage}-data
 ```
 
+# Testing
+
+The test suite is split into three independent layers. The first two run
+offline and need no AWS account; the third is opt-in and talks to a real AWS
+account.
+
+## Unit tests
+
+Pure logic, schema validation and CloudFormation snapshots under
+`src/__tests__/`. No AWS credentials required.
+
+```bash
+npm test
+
+# Re-run on change
+npm run test:watch
+```
+
+## End-to-end (CloudFormation synthesis) tests
+
+The tests in `e2e/` apply the plugin to the example projects under
+`examples/`, run `serverless package`, and assert on the generated
+CloudFormation. They build the plugin first and **do not deploy anything to
+AWS**, so they need no credentials and are safe to run on every PR. See
+[`e2e/README.md`](e2e/README.md) for details.
+
+```bash
+# Run all synthesis tests (runs `npm run build` first)
+npm run test:e2e
+
+# Unit + e2e together
+npm run test:all
+
+# A single fixture
+npx jest --config jest.e2e.config.ts basic-api-key
+```
+
+## AWS integration tests
+
+The suite in `integration/` exercises the live AWS code paths against a **real
+AWS account**, so it **costs money and requires credentials**. It is gated
+behind `APPSYNC_PLUGIN_INTEGRATION=1` — without it every suite resolves to
+`describe.skip` and the run exits green, which is why it never runs as part of
+`npm test`, `npm run test:e2e`, `npm run test:all`, or the default CI.
+
+```bash
+# Cheapest useful run (evaluate + minimal deploy tiers)
+APPSYNC_PLUGIN_INTEGRATION=1 \
+APPSYNC_PLUGIN_INTEGRATION_REGION=us-west-2 \
+AWS_PROFILE=my-sandbox \
+npm run test:integration
+```
+
+Higher-cost tiers are opt-in on top of the master switch: set
+`APPSYNC_PLUGIN_INTEGRATION_CACHING=1` for the caching tier, and
+`APPSYNC_PLUGIN_INTEGRATION_DOMAIN` + `APPSYNC_PLUGIN_INTEGRATION_HOSTED_ZONE_ID`
+for the custom-domain tier. After a run, sweep any leftover stacks with
+`npm run test:integration:sweep`. See
+[`doc/integration-tests.md`](doc/integration-tests.md) for the full tier
+breakdown, environment variables, and cost profile.
+
 # Configuration
 
 - [General config](doc/general-config.md)
@@ -55,10 +153,24 @@ appSync:
 - [Variable Substitutions](doc/substitutions.md)
 - [Caching](doc/caching.md)
 - [Web Application Firewall (WAF)](doc/WAF.md)
+- [Testing Resolvers](doc/testing-resolvers.md)
 
 # CLI
 
 This plugin adds some useful CLI commands. See [CLI commands documentation](doc/commands.md)
+
+| Command                         | Description                                              |
+| ------------------------------- | -------------------------------------------------------- |
+| `sls appsync validate-schema`   | Validate the GraphQL schema                              |
+| `sls appsync get-introspection` | Export the introspection schema (JSON or SDL)            |
+| `sls appsync flush-cache`       | Flush the API cache                                      |
+| `sls appsync console`           | Open the AWS AppSync console                             |
+| `sls appsync cloudwatch`        | Open CloudWatch logs                                     |
+| `sls appsync logs`              | Stream logs to stdout                                    |
+| `sls appsync evaluate`          | Evaluate a JS resolver or VTL template without deploying |
+| `sls appsync env get`           | Get runtime environment variables of the deployed API    |
+| `sls appsync env set`           | Set a runtime environment variable on the deployed API   |
+| `sls appsync domain *`          | Manage custom domains                                    |
 
 # Variables
 
