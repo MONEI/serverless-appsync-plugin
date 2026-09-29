@@ -1,4 +1,5 @@
 import { BuildOptions } from 'esbuild';
+import { IntrinsicFunction } from './cloudFormation';
 import {
   ApiKeyConfig,
   Auth,
@@ -35,7 +36,7 @@ export type AppSyncConfig = {
     | Record<string, DataSourceConfig>;
   substitutions?: Substitutions;
   environment?: EnvironmentVariables;
-  xrayEnabled?: boolean;
+  xrayEnabled?: boolean | IntrinsicFunction;
   logging?: LoggingConfig;
   caching?: CachingConfig;
   waf?: WafConfig;
@@ -61,6 +62,7 @@ export type BaseResolverConfig = {
     | boolean;
   sync?: SyncConfig;
   substitutions?: Substitutions;
+  metricsConfig?: 'ENABLED' | 'DISABLED';
 };
 
 export type ResolverConfig = UnitResolverConfig | PipelineResolverConfig;

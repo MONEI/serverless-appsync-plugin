@@ -49,6 +49,15 @@ describe('Valdiation', () => {
     }).toThrowErrorMatchingSnapshot();
   });
 
+  it('should allow intrinsic functions for xrayEnabled', () => {
+    expect(
+      validateConfig({
+        ...basicConfig,
+        xrayEnabled: { 'Fn::ImportValue': 'XrayEnabled' },
+      } as AppSyncConfig),
+    ).toBe(true);
+  });
+
   describe('Log', () => {
     describe('Valid', () => {
       const assertions = [
@@ -70,6 +79,16 @@ describe('Valdiation', () => {
               retentionInDays: 14,
               excludeVerboseContent: true,
               loggingRoleArn: { Ref: 'MyLogGorupArn' },
+            },
+          } as AppSyncConfig,
+        },
+        {
+          name: 'Intrinsic excludeVerboseContent',
+          config: {
+            ...basicConfig,
+            logging: {
+              level: 'ALL',
+              excludeVerboseContent: { 'Fn::ImportValue': 'ExcludeVerbose' },
             },
           } as AppSyncConfig,
         },
@@ -143,6 +162,7 @@ describe('Valdiation', () => {
                     name: 'Throttle',
                     action: 'Block',
                     limit: 200,
+                    evaluationWindowSec: 300,
                     priority: 200,
                     aggregateKeyType: 'IP',
                     forwardedIPConfig: {
@@ -256,6 +276,23 @@ describe('Valdiation', () => {
                   throttle: {
                     name: 'Throttle',
                     limit: 99,
+                  },
+                },
+              ],
+            },
+          },
+        },
+        {
+          name: 'Throttle evaluationWindowSec',
+          config: {
+            ...basicConfig,
+            waf: {
+              rules: [
+                {
+                  throttle: {
+                    name: 'Throttle',
+                    limit: 200,
+                    evaluationWindowSec: 301,
                   },
                 },
               ],
@@ -447,6 +484,64 @@ describe('Valdiation', () => {
             caching: {
               behavior: 'PER_RESOLVER_CACHING',
               ttl: 3601,
+            },
+          },
+        },
+      ];
+
+      assertions.forEach((config) => {
+        it(`should validate a ${config.name}`, () => {
+          expect(function () {
+            validateConfig(config.config);
+          }).toThrowErrorMatchingSnapshot();
+        });
+      });
+    });
+  });
+
+  describe('EnhancedMetrics', () => {
+    describe('Valid', () => {
+      const assertions = [
+        {
+          name: 'Full',
+          config: {
+            ...basicConfig,
+            enhancedMetrics: {
+              DataSourceLevelMetricsBehavior:
+                'FULL_REQUEST_DATA_SOURCE_METRICS',
+              OperationLevelMetricsConfig: 'DISABLED',
+              ResolverLevelMetricsBehavior: 'PER_RESOLVER_METRICS',
+            },
+          } as AppSyncConfig,
+        },
+      ];
+
+      assertions.forEach((config) => {
+        it(`should validate a ${config.name}`, () => {
+          expect(validateConfig(config.config)).toBe(true);
+        });
+      });
+    });
+
+    describe('Invalid', () => {
+      const assertions = [
+        {
+          name: 'Missing required field',
+          config: {
+            ...basicConfig,
+            enhancedMetrics: {
+              OperationLevelMetricsConfig: 'ENABLED',
+            },
+          },
+        },
+        {
+          name: 'Bad value',
+          config: {
+            ...basicConfig,
+            enhancedMetrics: {
+              DataSourceLevelMetricsBehavior: 'PER_DATA_SOURCE_METRICS',
+              OperationLevelMetricsConfig: 'NOPE',
+              ResolverLevelMetricsBehavior: 'PER_RESOLVER_METRICS',
             },
           },
         },

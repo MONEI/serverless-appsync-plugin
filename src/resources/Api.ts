@@ -112,6 +112,19 @@ export class Api {
       });
     }
 
+    if (this.config.enhancedMetrics) {
+      merge(endpointResource.Properties, {
+        EnhancedMetricsConfig: {
+          DataSourceLevelMetricsBehavior:
+            this.config.enhancedMetrics.DataSourceLevelMetricsBehavior,
+          OperationLevelMetricsConfig:
+            this.config.enhancedMetrics.OperationLevelMetricsConfig,
+          ResolverLevelMetricsBehavior:
+            this.config.enhancedMetrics.ResolverLevelMetricsBehavior,
+        },
+      });
+    }
+
     if (this.config.introspection !== undefined) {
       merge(endpointResource.Properties, {
         IntrospectionConfig: this.config.introspection ? 'ENABLED' : 'DISABLED',
@@ -146,6 +159,28 @@ export class Api {
     const roleLogicalId = this.naming.getLogGroupRoleLogicalId();
     const policyLogicalId = this.naming.getLogGroupPolicyLogicalId();
     const apiLogicalId = this.naming.getApiLogicalId();
+
+    if (this.config.logging.roleArn) {
+      return {
+        [logGroupLogicalId]: {
+          Type: 'AWS::Logs::LogGroup',
+          Properties: {
+            LogGroupName: {
+              'Fn::Join': [
+                '/',
+                [
+                  '/aws/appsync/apis',
+                  { 'Fn::GetAtt': [apiLogicalId, 'ApiId'] },
+                ],
+              ],
+            },
+            RetentionInDays:
+              this.config.logging.retentionInDays ||
+              this.plugin.serverless.service.provider.logRetentionInDays,
+          },
+        },
+      };
+    }
 
     return {
       [logGroupLogicalId]: {

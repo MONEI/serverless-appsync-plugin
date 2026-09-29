@@ -11,14 +11,14 @@ describe('Api', () => {
     it('should compile the Api Resource', () => {
       const api = new Api(given.appSyncConfig(), plugin);
       expect(api.compileEndpoint()).toMatchInlineSnapshot(`
-        Object {
-          "GraphQlApi": Object {
-            "Properties": Object {
+        {
+          "GraphQlApi": {
+            "Properties": {
               "AuthenticationType": "API_KEY",
               "EnvironmentVariables": undefined,
               "Name": "MyApi",
-              "Tags": Array [
-                Object {
+              "Tags": [
+                {
                   "Key": "stage",
                   "Value": "Dev",
                 },
@@ -39,14 +39,14 @@ describe('Api', () => {
         plugin,
       );
       expect(api.compileEndpoint()).toMatchInlineSnapshot(`
-        Object {
-          "GraphQlApi": Object {
-            "Properties": Object {
+        {
+          "GraphQlApi": {
+            "Properties": {
               "AuthenticationType": "API_KEY",
               "EnvironmentVariables": undefined,
               "Name": "MyApi",
-              "Tags": Array [
-                Object {
+              "Tags": [
+                {
                   "Key": "stage",
                   "Value": "Dev",
                 },
@@ -70,17 +70,17 @@ describe('Api', () => {
         plugin,
       );
       expect(api.compileEndpoint()).toMatchInlineSnapshot(`
-        Object {
-          "GraphQlApi": Object {
-            "Properties": Object {
+        {
+          "GraphQlApi": {
+            "Properties": {
               "AuthenticationType": "API_KEY",
               "EnvironmentVariables": undefined,
               "IntrospectionConfig": "DISABLED",
               "Name": "MyApi",
               "QueryDepthLimit": 10,
               "ResolverCountLimit": 20,
-              "Tags": Array [
-                Object {
+              "Tags": [
+                {
                   "Key": "stage",
                   "Value": "Dev",
                 },
@@ -91,6 +91,39 @@ describe('Api', () => {
           },
         }
       `);
+    });
+
+    it('should compile EnhancedMetricsConfig when configured', () => {
+      const api = new Api(
+        given.appSyncConfig({
+          enhancedMetrics: {
+            DataSourceLevelMetricsBehavior: 'FULL_REQUEST_DATA_SOURCE_METRICS',
+            OperationLevelMetricsConfig: 'ENABLED',
+            ResolverLevelMetricsBehavior: 'PER_RESOLVER_METRICS',
+          },
+        }),
+        plugin,
+      );
+      const props = (
+        api.compileEndpoint().GraphQlApi as {
+          Properties: Record<string, unknown>;
+        }
+      ).Properties;
+      expect(props.EnhancedMetricsConfig).toEqual({
+        DataSourceLevelMetricsBehavior: 'FULL_REQUEST_DATA_SOURCE_METRICS',
+        OperationLevelMetricsConfig: 'ENABLED',
+        ResolverLevelMetricsBehavior: 'PER_RESOLVER_METRICS',
+      });
+    });
+
+    it('should not emit EnhancedMetricsConfig when not configured', () => {
+      const api = new Api(given.appSyncConfig(), plugin);
+      const props = (
+        api.compileEndpoint().GraphQlApi as {
+          Properties: Record<string, unknown>;
+        }
+      ).Properties;
+      expect(props.EnhancedMetricsConfig).toBeUndefined();
     });
 
     it('should compile the Api Resource with Environments', () => {
@@ -106,19 +139,19 @@ describe('Api', () => {
         plugin,
       );
       expect(api.compileEndpoint()).toMatchInlineSnapshot(`
-        Object {
-          "GraphQlApi": Object {
-            "Properties": Object {
+        {
+          "GraphQlApi": {
+            "Properties": {
               "AuthenticationType": "API_KEY",
-              "EnvironmentVariables": Object {
-                "OTHER_TABLE": Object {
+              "EnvironmentVariables": {
+                "OTHER_TABLE": {
                   "Ref": "OtherTable",
                 },
                 "TABLE_NAME": "MyTable",
               },
               "Name": "MyApi",
-              "Tags": Array [
-                Object {
+              "Tags": [
+                {
                   "Key": "stage",
                   "Value": "Dev",
                 },
@@ -143,14 +176,14 @@ describe('Api', () => {
         plugin,
       );
       expect(api.compileEndpoint()).toMatchInlineSnapshot(`
-        Object {
-          "GraphQlApi": Object {
-            "Properties": Object {
+        {
+          "GraphQlApi": {
+            "Properties": {
               "AuthenticationType": "API_KEY",
               "EnvironmentVariables": undefined,
-              "LogConfig": Object {
-                "CloudWatchLogsRoleArn": Object {
-                  "Fn::GetAtt": Array [
+              "LogConfig": {
+                "CloudWatchLogsRoleArn": {
+                  "Fn::GetAtt": [
                     "GraphQlApiLogGroupRole",
                     "Arn",
                   ],
@@ -159,8 +192,8 @@ describe('Api', () => {
                 "FieldLogLevel": "ERROR",
               },
               "Name": "MyApi",
-              "Tags": Array [
-                Object {
+              "Tags": [
+                {
                   "Key": "stage",
                   "Value": "Dev",
                 },
@@ -218,36 +251,36 @@ describe('Api', () => {
         plugin,
       );
       expect(api.compileEndpoint()).toMatchInlineSnapshot(`
-        Object {
-          "GraphQlApi": Object {
-            "Properties": Object {
-              "AdditionalAuthenticationProviders": Array [
-                Object {
+        {
+          "GraphQlApi": {
+            "Properties": {
+              "AdditionalAuthenticationProviders": [
+                {
                   "AuthenticationType": "AMAZON_COGNITO_USER_POOLS",
-                  "UserPoolConfig": Object {
+                  "UserPoolConfig": {
                     "AppIdClientRegex": "[a-z]",
                     "AwsRegion": "us-east-1",
                     "UserPoolId": "pool123",
                   },
                 },
-                Object {
+                {
                   "AuthenticationType": "AWS_IAM",
                 },
-                Object {
+                {
                   "AuthenticationType": "OPENID_CONNECT",
-                  "OpenIDConnectConfig": Object {
+                  "OpenIDConnectConfig": {
                     "AuthTTL": 60,
                     "ClientId": "333746dd-06fc-44df-bce2-5ff108724044",
                     "IatTTL": 3600,
                     "Issuer": "https://auth.example.com",
                   },
                 },
-                Object {
+                {
                   "AuthenticationType": "AWS_LAMBDA",
-                  "LambdaAuthorizerConfig": Object {
+                  "LambdaAuthorizerConfig": {
                     "AuthorizerResultTtlInSeconds": 300,
-                    "AuthorizerUri": Object {
-                      "Fn::GetAtt": Array [
+                    "AuthorizerUri": {
+                      "Fn::GetAtt": [
                         "AuthFunctionLambdaFunction",
                         "Arn",
                       ],
@@ -259,13 +292,13 @@ describe('Api', () => {
               "AuthenticationType": "AMAZON_COGNITO_USER_POOLS",
               "EnvironmentVariables": undefined,
               "Name": "MyApi",
-              "Tags": Array [
-                Object {
+              "Tags": [
+                {
                   "Key": "stage",
                   "Value": "Dev",
                 },
               ],
-              "UserPoolConfig": Object {
+              "UserPoolConfig": {
                 "AppIdClientRegex": "[a-z]",
                 "AwsRegion": "us-east-1",
                 "DefaultAction": "ALLOW",
@@ -321,9 +354,7 @@ describe('Api', () => {
   describe('Logs', () => {
     it('should not compile CloudWatch Resources when logging not configured', () => {
       const api = new Api(given.appSyncConfig(), plugin);
-      expect(api.compileCloudWatchLogGroup()).toMatchInlineSnapshot(
-        `Object {}`,
-      );
+      expect(api.compileCloudWatchLogGroup()).toMatchInlineSnapshot(`{}`);
     });
 
     it('should not compile CloudWatch Resources when logging is disabled', () => {
@@ -337,9 +368,7 @@ describe('Api', () => {
         }),
         plugin,
       );
-      expect(api.compileCloudWatchLogGroup()).toMatchInlineSnapshot(
-        `Object {}`,
-      );
+      expect(api.compileCloudWatchLogGroup()).toMatchInlineSnapshot(`{}`);
     });
 
     it('should compile CloudWatch Resources when enaabled', () => {
@@ -353,16 +382,16 @@ describe('Api', () => {
         plugin,
       );
       expect(api.compileCloudWatchLogGroup()).toMatchInlineSnapshot(`
-        Object {
-          "GraphQlApiLogGroup": Object {
-            "Properties": Object {
-              "LogGroupName": Object {
-                "Fn::Join": Array [
+        {
+          "GraphQlApiLogGroup": {
+            "Properties": {
+              "LogGroupName": {
+                "Fn::Join": [
                   "/",
-                  Array [
+                  [
                     "/aws/appsync/apis",
-                    Object {
-                      "Fn::GetAtt": Array [
+                    {
+                      "Fn::GetAtt": [
                         "GraphQlApi",
                         "ApiId",
                       ],
@@ -374,20 +403,20 @@ describe('Api', () => {
             },
             "Type": "AWS::Logs::LogGroup",
           },
-          "GraphQlApiLogGroupPolicy": Object {
-            "Properties": Object {
-              "PolicyDocument": Object {
-                "Statement": Array [
-                  Object {
-                    "Action": Array [
+          "GraphQlApiLogGroupPolicy": {
+            "Properties": {
+              "PolicyDocument": {
+                "Statement": [
+                  {
+                    "Action": [
                       "logs:CreateLogGroup",
                       "logs:CreateLogStream",
                       "logs:PutLogEvents",
                     ],
                     "Effect": "Allow",
-                    "Resource": Array [
-                      Object {
-                        "Fn::GetAtt": Array [
+                    "Resource": [
+                      {
+                        "Fn::GetAtt": [
                           "GraphQlApiLogGroup",
                           "Arn",
                         ],
@@ -398,25 +427,25 @@ describe('Api', () => {
                 "Version": "2012-10-17",
               },
               "PolicyName": "GraphQlApiLogGroupPolicy",
-              "Roles": Array [
-                Object {
+              "Roles": [
+                {
                   "Ref": "GraphQlApiLogGroupRole",
                 },
               ],
             },
             "Type": "AWS::IAM::Policy",
           },
-          "GraphQlApiLogGroupRole": Object {
-            "Properties": Object {
-              "AssumeRolePolicyDocument": Object {
-                "Statement": Array [
-                  Object {
-                    "Action": Array [
+          "GraphQlApiLogGroupRole": {
+            "Properties": {
+              "AssumeRolePolicyDocument": {
+                "Statement": [
+                  {
+                    "Action": [
                       "sts:AssumeRole",
                     ],
                     "Effect": "Allow",
-                    "Principal": Object {
-                      "Service": Array [
+                    "Principal": {
+                      "Service": [
                         "appsync.amazonaws.com",
                       ],
                     },
@@ -443,11 +472,11 @@ describe('Api', () => {
           expiresAfter: 24,
         }),
       ).toMatchInlineSnapshot(`
-        Object {
-          "GraphQlApiDefault": Object {
-            "Properties": Object {
-              "ApiId": Object {
-                "Fn::GetAtt": Array [
+        {
+          "GraphQlApiDefault": {
+            "Properties": {
+              "ApiId": {
+                "Fn::GetAtt": [
                   "GraphQlApi",
                   "ApiId",
                 ],
@@ -470,11 +499,11 @@ describe('Api', () => {
           expiresAfter: '24',
         }),
       ).toMatchInlineSnapshot(`
-        Object {
-          "GraphQlApiDefault": Object {
-            "Properties": Object {
-              "ApiId": Object {
-                "Fn::GetAtt": Array [
+        {
+          "GraphQlApiDefault": {
+            "Properties": {
+              "ApiId": {
+                "Fn::GetAtt": [
                   "GraphQlApi",
                   "ApiId",
                 ],
@@ -497,11 +526,11 @@ describe('Api', () => {
           expiresAfter: '30d',
         }),
       ).toMatchInlineSnapshot(`
-        Object {
-          "GraphQlApiDefault": Object {
-            "Properties": Object {
-              "ApiId": Object {
-                "Fn::GetAtt": Array [
+        {
+          "GraphQlApiDefault": {
+            "Properties": {
+              "ApiId": {
+                "Fn::GetAtt": [
                   "GraphQlApi",
                   "ApiId",
                 ],
@@ -524,11 +553,11 @@ describe('Api', () => {
           expiresAt: '2022-12-31T22:00:00+00:00',
         }),
       ).toMatchInlineSnapshot(`
-        Object {
-          "GraphQlApiDefault": Object {
-            "Properties": Object {
-              "ApiId": Object {
-                "Fn::GetAtt": Array [
+        {
+          "GraphQlApiDefault": {
+            "Properties": {
+              "ApiId": {
+                "Fn::GetAtt": [
                   "GraphQlApi",
                   "ApiId",
                 ],
@@ -550,11 +579,11 @@ describe('Api', () => {
           description: 'Default Key',
         }),
       ).toMatchInlineSnapshot(`
-        Object {
-          "GraphQlApiDefault": Object {
-            "Properties": Object {
-              "ApiId": Object {
-                "Fn::GetAtt": Array [
+        {
+          "GraphQlApiDefault": {
+            "Properties": {
+              "ApiId": {
+                "Fn::GetAtt": [
                   "GraphQlApi",
                   "ApiId",
                 ],
@@ -581,7 +610,7 @@ describe('Api', () => {
         plugin,
       );
       expect(api.compileLambdaAuthorizerPermission()).toMatchInlineSnapshot(
-        `Object {}`,
+        `{}`,
       );
     });
 
@@ -598,13 +627,13 @@ describe('Api', () => {
         plugin,
       );
       expect(api.compileLambdaAuthorizerPermission()).toMatchInlineSnapshot(`
-        Object {
-          "LambdaAuthorizerPermission": Object {
-            "Properties": Object {
+        {
+          "LambdaAuthorizerPermission": {
+            "Properties": {
               "Action": "lambda:InvokeFunction",
               "FunctionName": "arn:",
               "Principal": "appsync.amazonaws.com",
-              "SourceArn": Object {
+              "SourceArn": {
                 "Ref": "GraphQlApi",
               },
             },
@@ -629,13 +658,13 @@ describe('Api', () => {
         plugin,
       );
       expect(api.compileLambdaAuthorizerPermission()).toMatchInlineSnapshot(`
-        Object {
-          "LambdaAuthorizerPermission": Object {
-            "Properties": Object {
+        {
+          "LambdaAuthorizerPermission": {
+            "Properties": {
               "Action": "lambda:InvokeFunction",
               "FunctionName": "arn:",
               "Principal": "appsync.amazonaws.com",
-              "SourceArn": Object {
+              "SourceArn": {
                 "Ref": "GraphQlApi",
               },
             },
@@ -673,25 +702,25 @@ describe('Caching', () => {
       plugin,
     );
     expect(api.compileCachingResources()).toMatchInlineSnapshot(`
-        Object {
-          "GraphQlCaching": Object {
-            "Properties": Object {
-              "ApiCachingBehavior": "FULL_REQUEST_CACHING",
-              "ApiId": Object {
-                "Fn::GetAtt": Array [
-                  "GraphQlApi",
-                  "ApiId",
-                ],
-              },
-              "AtRestEncryptionEnabled": false,
-              "TransitEncryptionEnabled": false,
-              "Ttl": 3600,
-              "Type": "T2_SMALL",
+      {
+        "GraphQlCaching": {
+          "Properties": {
+            "ApiCachingBehavior": "FULL_REQUEST_CACHING",
+            "ApiId": {
+              "Fn::GetAtt": [
+                "GraphQlApi",
+                "ApiId",
+              ],
             },
-            "Type": "AWS::AppSync::ApiCache",
+            "AtRestEncryptionEnabled": false,
+            "TransitEncryptionEnabled": false,
+            "Ttl": 3600,
+            "Type": "T2_SMALL",
           },
-        }
-      `);
+          "Type": "AWS::AppSync::ApiCache",
+        },
+      }
+    `);
   });
 
   it('should generate Resources with custom Config', () => {
@@ -708,32 +737,32 @@ describe('Caching', () => {
       plugin,
     );
     expect(api.compileCachingResources()).toMatchInlineSnapshot(`
-        Object {
-          "GraphQlCaching": Object {
-            "Properties": Object {
-              "ApiCachingBehavior": "FULL_REQUEST_CACHING",
-              "ApiId": Object {
-                "Fn::GetAtt": Array [
-                  "GraphQlApi",
-                  "ApiId",
-                ],
-              },
-              "AtRestEncryptionEnabled": true,
-              "TransitEncryptionEnabled": true,
-              "Ttl": 500,
-              "Type": "T2_MEDIUM",
+      {
+        "GraphQlCaching": {
+          "Properties": {
+            "ApiCachingBehavior": "FULL_REQUEST_CACHING",
+            "ApiId": {
+              "Fn::GetAtt": [
+                "GraphQlApi",
+                "ApiId",
+              ],
             },
-            "Type": "AWS::AppSync::ApiCache",
+            "AtRestEncryptionEnabled": true,
+            "TransitEncryptionEnabled": true,
+            "Ttl": 500,
+            "Type": "T2_MEDIUM",
           },
-        }
-      `);
+          "Type": "AWS::AppSync::ApiCache",
+        },
+      }
+    `);
   });
 });
 
 describe('Domains', () => {
   it('should not generate domain resources when not configured', () => {
     const api = new Api(given.appSyncConfig({ domain: undefined }), plugin);
-    expect(api.compileCustomDomain()).toMatchInlineSnapshot(`Object {}`);
+    expect(api.compileCustomDomain()).toMatchInlineSnapshot(`{}`);
   });
 
   it('should not generate domain resources when disabled', () => {
@@ -748,7 +777,7 @@ describe('Domains', () => {
       }),
       plugin,
     );
-    expect(api.compileCustomDomain()).toMatchInlineSnapshot(`Object {}`);
+    expect(api.compileCustomDomain()).toMatchInlineSnapshot(`{}`);
   });
 
   it('should generate domain resources', () => {

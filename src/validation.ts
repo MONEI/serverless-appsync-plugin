@@ -20,6 +20,7 @@ const DATASOURCE_TYPES = [
   'NONE',
   'RELATIONAL_DATABASE',
   'AMAZON_EVENTBRIDGE',
+  'AMAZON_BEDROCK_RUNTIME',
 ] as const;
 
 export const appSyncSchema = {
@@ -35,6 +36,22 @@ export const appSyncSchema = {
         },
       ],
       errorMessage: 'must be a string or a CloudFormation intrinsic function',
+    },
+    booleanOrIntrinsicFunction: {
+      oneOf: [
+        { type: 'boolean' },
+        {
+          type: 'object',
+          required: [],
+          additionalProperties: true,
+        },
+      ],
+      errorMessage: 'must be a boolean or a CloudFormation intrinsic function',
+    },
+    mappingTemplate: {
+      oneOf: [{ type: 'string' }, { const: false }],
+      errorMessage:
+        'must be a string (path to the template) or false to omit the mapping template',
     },
     lambdaFunctionConfig: {
       oneOf: [
@@ -128,7 +145,7 @@ export const appSyncSchema = {
     oidcAuth: {
       type: 'object',
       properties: {
-        issuer: { type: 'string' },
+        issuer: { $ref: '#/definitions/stringOrIntrinsicFunction' },
         clientId: { type: 'string' },
         iatTTL: { type: 'number' },
         authTTL: { type: 'number' },
@@ -202,6 +219,10 @@ export const appSyncSchema = {
                       enum: ['IP', 'FORWARDED_IP'],
                     },
                     limit: { type: 'integer', minimum: 100 },
+                    evaluationWindowSec: {
+                      type: 'integer',
+                      enum: [60, 120, 300, 600],
+                    },
                     priority: { type: 'integer' },
                     scopeDownStatement: { type: 'object' },
                     forwardedIPConfig: {
@@ -283,11 +304,16 @@ export const appSyncSchema = {
         field: { type: 'string' },
         maxBatchSize: { type: 'number', minimum: 1, maximum: 2000 },
         code: { type: 'string' },
-        request: { type: 'string' },
-        response: { type: 'string' },
+        request: { $ref: '#/definitions/mappingTemplate' },
+        response: { $ref: '#/definitions/mappingTemplate' },
         sync: { $ref: '#/definitions/syncConfig' },
         substitutions: { $ref: '#/definitions/substitutions' },
         caching: { $ref: '#/definitions/resolverCachingConfig' },
+        metricsConfig: {
+          type: 'string',
+          enum: ['ENABLED', 'DISABLED'],
+          errorMessage: "must be 'ENABLED' or 'DISABLED'",
+        },
       },
       if: { properties: { kind: { const: 'UNIT' } }, required: ['kind'] },
       then: {
@@ -481,6 +507,18 @@ export const appSyncSchema = {
                   },
                   required: ['config'],
                 },
+                else: {
+                  if: {
+                    properties: { type: { const: 'AMAZON_BEDROCK_RUNTIME' } },
+                  },
+                  then: {
+                    properties: {
+                      config: {
+                        $ref: '#/definitions/datasourceBedrockConfig',
+                      },
+                    },
+                  },
+                },
               },
             },
           },
@@ -630,6 +668,19 @@ export const appSyncSchema = {
       },
       required: ['eventBusArn'],
     },
+    datasourceBedrockConfig: {
+      type: 'object',
+      properties: {
+        serviceRoleArn: { $ref: '#/definitions/stringOrIntrinsicFunction' },
+        iamRoleStatements: { $ref: '#/definitions/iamRoleStatements' },
+        region: { $ref: '#/definitions/stringOrIntrinsicFunction' },
+        models: {
+          type: 'array',
+          items: { $ref: '#/definitions/stringOrIntrinsicFunction' },
+        },
+      },
+      required: [],
+    },
   },
   properties: {
     name: { type: 'string' },
@@ -685,7 +736,7 @@ export const appSyncSchema = {
           'when using CloudFormation, you must provide either certificateArn or hostedZoneId.',
       },
     },
-    xrayEnabled: { type: 'boolean' },
+    xrayEnabled: { $ref: '#/definitions/booleanOrIntrinsicFunction' },
     visibility: {
       type: 'string',
       enum: ['GLOBAL', 'PRIVATE'],
@@ -801,14 +852,45 @@ export const appSyncSchema = {
         roleArn: { $ref: '#/definitions/stringOrIntrinsicFunction' },
         level: {
           type: 'string',
-          enum: ['ALL', 'ERROR', 'NONE'],
-          errorMessage: "must be one of 'ALL', 'ERROR' or 'NONE'",
+          enum: ['ALL', 'INFO', 'DEBUG', 'ERROR', 'NONE'],
+          errorMessage:
+            "must be one of 'ALL', 'INFO', 'DEBUG', 'ERROR' or 'NONE'",
         },
         retentionInDays: { type: 'integer' },
-        excludeVerboseContent: { type: 'boolean' },
+        excludeVerboseContent: {
+          $ref: '#/definitions/booleanOrIntrinsicFunction',
+        },
         enabled: { type: 'boolean' },
       },
       required: ['level'],
+    },
+    enhancedMetrics: {
+      type: 'object',
+      properties: {
+        DataSourceLevelMetricsBehavior: {
+          type: 'string',
+          enum: ['FULL_REQUEST_DATA_SOURCE_METRICS', 'PER_DATA_SOURCE_METRICS'],
+          errorMessage:
+            "must be 'FULL_REQUEST_DATA_SOURCE_METRICS' or 'PER_DATA_SOURCE_METRICS'",
+        },
+        OperationLevelMetricsConfig: {
+          type: 'string',
+          enum: ['ENABLED', 'DISABLED'],
+          errorMessage: "must be 'ENABLED' or 'DISABLED'",
+        },
+        ResolverLevelMetricsBehavior: {
+          type: 'string',
+          enum: ['FULL_REQUEST_RESOLVER_METRICS', 'PER_RESOLVER_METRICS'],
+          errorMessage:
+            "must be 'FULL_REQUEST_RESOLVER_METRICS' or 'PER_RESOLVER_METRICS'",
+        },
+      },
+      required: [
+        'DataSourceLevelMetricsBehavior',
+        'OperationLevelMetricsConfig',
+        'ResolverLevelMetricsBehavior',
+      ],
+      additionalProperties: false,
     },
     dataSources: {
       oneOf: [
