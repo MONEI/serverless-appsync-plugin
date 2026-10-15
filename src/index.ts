@@ -1170,12 +1170,10 @@ class ServerlessAppsyncPlugin {
     };
     const encryption = this.serverless.service.provider.deploymentBucketObject;
     if (encryption) {
-      // Same encryption options as the Framework's own artifact uploads.
+      // No SSE-C: CloudFormation reads DefinitionS3Location without the
+      // customer key, so the object gets the bucket's default encryption.
       Object.assign(params, {
         ServerSideEncryption: encryption.serverSideEncryption,
-        SSECustomerAlgorithm: encryption.sseCustomerAlgorithim,
-        SSECustomerKey: encryption.sseCustomerKey,
-        SSECustomerKeyMD5: encryption.sseCustomerKeyMD5,
         SSEKMSKeyId: encryption.sseKMSKeyId,
       });
     }

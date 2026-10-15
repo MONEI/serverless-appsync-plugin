@@ -24,7 +24,8 @@ const setup = () => {
   serverless.service.provider.deploymentBucketObject = {
     serverSideEncryption: 'aws:kms',
     sseKMSKeyId: 'my-key',
-  };
+    sseCustomerKey: 'my-customer-key',
+  } as typeof serverless.service.provider.deploymentBucketObject;
   serverless.configurationInput.appSync = given.appSyncConfig({
     schema: [
       path.resolve('src/__tests__/fixtures/schemas/reserved/schema.graphql'),
@@ -58,6 +59,7 @@ describe('uploadSchemaToS3', () => {
       ServerSideEncryption: 'aws:kms',
       SSEKMSKeyId: 'my-key',
     });
+    expect(command.input).not.toHaveProperty('SSECustomerKey');
     expect(command.input.Body).toContain('type Account');
   });
 

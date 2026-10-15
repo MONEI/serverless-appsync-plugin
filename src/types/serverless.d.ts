@@ -70,9 +70,6 @@ declare module 'serverless/lib/Serverless' {
         // replaces with the bucket name.
         deploymentBucketObject?: {
           serverSideEncryption?: string;
-          sseCustomerAlgorithim?: string;
-          sseCustomerKey?: string;
-          sseCustomerKeyMD5?: string;
           sseKMSKeyId?: string;
         };
       };
